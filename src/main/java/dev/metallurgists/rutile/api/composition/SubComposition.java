@@ -1,9 +1,7 @@
 package dev.metallurgists.rutile.api.composition;
 
 import com.google.gson.JsonObject;
-import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.tterrag.registrate.util.nullness.NonNullFunction;
 import dev.metallurgists.rutile.RutileClient;
@@ -24,21 +22,12 @@ import java.util.HashMap;
 import java.util.List;
 
 public class SubComposition implements IComposable {
-    public static final Codec<SubComposition> CODEC = Codec.recursive(SubComposition.class.getSimpleName(),
-		recursed -> RecordCodecBuilder.create(instance -> instance.group(
-				Codec.list(Codec.xor(ElementStack.CODEC, recursed).flatComapMap(
-					(e) -> e.map(ee -> (IComposable) ee, ee -> (IComposable) ee),
-					(c) -> {
-						Either<ElementStack, SubComposition> either = null;
-						if (c instanceof ElementStack cee) either = Either.left(cee);
-						else if (c instanceof SubComposition csc) either = Either.right(csc);
-						if (either == null) return DataResult.error(() -> "Failed to parse composition elements.");
-						return DataResult.success(either);
-					}
-				)).fieldOf("elements").forGetter(SubComposition::getElements),
-				Codec.INT.optionalFieldOf("amount", 1).forGetter(SubComposition::getAmount)
-			).apply(instance, SubComposition::new)
-		)
+    public static final Codec<SubComposition> CODEC = new ComposableCompositionCodec<>(
+		SubComposition.class.getSimpleName(),
+		comp -> RecordCodecBuilder.create(instance -> instance.group(
+			Codec.list(comp).fieldOf("elements").forGetter(SubComposition::getElements),
+			Codec.INT.optionalFieldOf("amount", 1).forGetter(SubComposition::getAmount)
+		).apply(instance, SubComposition::new))
 	);
 
     @Getter

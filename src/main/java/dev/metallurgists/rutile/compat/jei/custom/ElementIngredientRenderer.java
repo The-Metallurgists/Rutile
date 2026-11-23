@@ -8,6 +8,7 @@ import dev.metallurgists.rutile.api.composition.element.ElementStack;
 import dev.metallurgists.rutile.util.ColourUtil;
 import lombok.RequiredArgsConstructor;
 import mezz.jei.api.ingredients.IIngredientRenderer;
+import mezz.jei.api.ingredients.rendering.IIngredientRenderContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -16,9 +17,12 @@ import net.minecraft.client.renderer.texture.MissingTextureAtlasSprite;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.InventoryMenu;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.TooltipFlag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -42,13 +46,14 @@ public class ElementIngredientRenderer implements IIngredientRenderer<ElementSta
         return size;
     }
 
-    @Override
+	///this method is deprecated, but still specified by the interface so :/
+	@Override @SuppressWarnings("removal")
     public void render(GuiGraphics guiGraphics, ElementStack element) {
         render(guiGraphics, element, 0, 0);
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, ElementStack element, int posX, int posY) {
+    public void render(GuiGraphics guiGraphics, ElementStack element, int posX, int posY, IIngredientRenderContext ctx) {
         RenderSystem.enableBlend();
         drawPlaque(guiGraphics, element.getElement(), posX, posY);
         RenderSystem.setShaderColor(1, 1, 1, 1);
@@ -128,11 +133,18 @@ public class ElementIngredientRenderer implements IIngredientRenderer<ElementSta
         BufferUploader.drawWithShader(bufferBuilder.buildOrThrow());
     }
 
-    @Override
-    public @NotNull List<Component> getTooltip(ElementStack stack, TooltipFlag flag) {
+	@Override @NotNull
+	public List<Component> getTooltip(ElementStack stack, Item.TooltipContext tooltipContext, @Nullable Player player, TooltipFlag flag) {
         List<Component> tooltip = new ArrayList<>();
-        tooltip.add(Component.translatable(stack.getElement().getOrCreateDescriptionId()).withStyle(Style.EMPTY.withColor(ColourUtil.brighter(stack.getColor(), 0.5f))));
+        tooltip.add(Component.translatable(stack.getElement().getOrCreateDescriptionId())
+			.withStyle(Style.EMPTY.withColor(ColourUtil.brighter(stack.getColor(), 0.5f))));
         stack.getTooltip(tooltip::add, flag);
         return tooltip;
     }
+	
+	///this method is deprecated, but still specified by the interface so :/
+	@SuppressWarnings("removal") @NotNull
+	public List<Component> getTooltip(ElementStack stack, TooltipFlag flag) {
+		throw new RuntimeException("Goddamnit, Mezz!");
+	}
 }

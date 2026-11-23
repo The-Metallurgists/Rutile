@@ -38,8 +38,16 @@ public class ElementStack implements IComposable {
 
     public static final ElementStack NULL = new ElementStack(Element.NULL, 1);
 
-    public static final Codec<ElementStack> CODEC;
-    public static final Codec<ElementStack> SINGLE_CODEC;
+    public static final Codec<ElementStack> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+		RutileRegistries.ELEMENTS_REGISTRY.byNameCodec().fieldOf("id").forGetter(ElementStack::getElement),
+                Codec.INT.optionalFieldOf("amount", 1).forGetter(ElementStack::getAmount),
+                Codec.DOUBLE.optionalFieldOf("mass").forGetter((es) -> es.getMass() == es.getElement().getMass() ? Optional.empty() : Optional.of(es.getMass()))
+		).apply(instance, (el, am, ma) -> new ElementStack(el, am, ma.orElse(el.getMass()))));
+	
+	//What is this for?
+	public static final Codec<ElementStack> SINGLE_CODEC = RecordCodecBuilder.create(instance -> instance.group(
+		RutileRegistries.ELEMENTS_REGISTRY.byNameCodec().fieldOf("id").forGetter(ElementStack::getElement)
+    ).apply(instance, ElementStack::new));
 
     public ElementStack(ElementLike element, int amount) {
         this(element.asElement(), amount, element.asElement().getMass());
@@ -112,25 +120,10 @@ public class ElementStack implements IComposable {
 	public HashMap<ElementStack, Integer> getContainedElements() {
 		return new HashMap<>(Map.of(this.copyWithAmount(1), this.getAmount()));
 	}
-	
-    //TODO: Find a way to stop the codec from printing the default mass.
-    static {
-        CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                RutileRegistries.ELEMENTS_REGISTRY.byNameCodec().fieldOf("id").forGetter(ElementStack::getElement),
-                Codec.INT.optionalFieldOf("amount", 1).forGetter(ElementStack::getAmount),
-                Codec.DOUBLE.optionalFieldOf("mass").forGetter((es) -> es.getMass() == es.getElement().getMass() ? Optional.empty() : Optional.of(es.getMass()))
-        ).apply(instance, (el, am, ma) -> new ElementStack(el, am, ma.orElse(el.getMass()))));
-        SINGLE_CODEC = RecordCodecBuilder.create(instance -> instance.group(
-                RutileRegistries.ELEMENTS_REGISTRY.byNameCodec().fieldOf("id").forGetter(ElementStack::getElement)
-        ).apply(instance, ElementStack::new));
-    }
 
     @Override
     public JsonObject toJson() {
-        JsonObject json = new JsonObject();
-        serialize(RutileRegistries.ELEMENTS_REGISTRY.byNameCodec(), this.element, "id", json);
-        serialize(Codec.INT, this.amount, "amount", json);
-        return json;
+		return serialize(CODEC, this);
     }
 
     public boolean isNull() {
