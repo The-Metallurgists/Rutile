@@ -209,7 +209,7 @@ publishing {
     repositories {
         maven {
             name = "krystal-maven"
-            url = uri("https://krystalsmaven.oreostack.uk/${findProperty("krystalRepository") ?: "releases"}")
+            url = uri("https://maven.metallurgists.dev/${findProperty("krystalRepository") ?: "releases"}")
             credentials {
                 username = "${findProperty("krystalMavenUser") ?: System.getenv("KRYSTAL_MAVEN_USER")}"
                 password = "${findProperty("krystalMavenToken") ?: System.getenv("KRYSTAL_MAVEN_PASSWORD")}"
